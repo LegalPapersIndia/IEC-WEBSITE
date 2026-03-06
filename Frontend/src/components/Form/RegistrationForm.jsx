@@ -1,0 +1,433 @@
+// src/components/Form/RegistrationForm.jsx
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import FormField from './FormField';
+import GradientButton from '../common/GradientButton';
+
+const applicationTypes = ['IEC Registration', 'IEC Modification', 'IEC Renewal'];
+
+const constitutions = [
+  'Proprietorship', 'Partnership', 'Limited Liability Partnership',
+  'Private Limited', 'opc', 'Public Limited', 'Govt. Undertaking',
+  'Section 25 Company', 'Registered Society', 'Trust', 'HUF'
+];
+
+const businessActivities = [
+  'Merchant Exporter', 'Manufacturer Exporter', 'Merchant cum Manufacturer Exporter',
+  'Service Provider', 'Merchant cum Service Provider', 'Manufacturer cum Service Provider',
+  'Merchant cum Manufacturer cum Service Provider', 'Others'
+];
+
+const indianStates = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+  'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+  'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
+  'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh',
+  'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Lakshadweep'
+];
+
+export default function RegistrationForm() {
+  const [formData, setFormData] = useState({
+    application_type: '',
+    business_entity: '',
+    constitution: '',
+    description_business: '',
+    business_activity: '',
+    date_of_incorporation: '',
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    state: '',
+    pincode: '',
+    has_branch: '',
+    pan_no: '',
+    email: '',
+    contact_no: '',
+    sez: 'No',
+  });
+
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
+
+  // Load draft
+  useEffect(() => {
+    const saved = localStorage.getItem('iecFormDraft');
+    if (saved) {
+      try {
+        setFormData((prev) => ({ ...prev, ...JSON.parse(saved) }));
+      } catch (e) {
+        console.warn('Invalid draft data');
+      }
+    }
+  }, []);
+
+  // Save draft
+  useEffect(() => {
+    localStorage.setItem('iecFormDraft', JSON.stringify(formData));
+  }, [formData]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // PAN uppercase
+    const processedValue = name === 'pan_no' ? value.toUpperCase() : value;
+
+    setFormData((prev) => ({ ...prev, [name]: processedValue }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.application_type) newErrors.application_type = 'Application Type is required';
+    if (!formData.business_entity.trim()) newErrors.business_entity = 'Business Entity name is required';
+    if (!formData.constitution) newErrors.constitution = 'Constitution is required';
+    if (!formData.business_activity) newErrors.business_activity = 'Business Activity is required';
+    if (!formData.address_line1.trim()) newErrors.address_line1 = 'Address Line 1 is required';
+    if (!formData.state) newErrors.state = 'State is required';
+    if (formData.pincode && !/^\d{6}$/.test(formData.pincode)) newErrors.pincode = 'Pincode must be 6 digits';
+    if (!formData.has_branch) newErrors.has_branch = 'Please select Yes or No';
+    if (formData.pan_no && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan_no)) newErrors.pan_no = 'Invalid PAN format (ABCDE1234F)';
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Valid email required';
+    if (formData.contact_no && !/^[6-9]\d{9}$/.test(formData.contact_no)) newErrors.contact_no = 'Mobile must be 10 digits starting with 6-9';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const prepareCrmPayload = () => ({
+    'ctl00$ContentPlaceHolder1$ddlApplicationType': formData.application_type || '',
+    'ctl00$ContentPlaceHolder1$txtBusinesEntity': formData.business_entity.trim() || '',
+    'ctl00$ContentPlaceHolder1$ddlConstitution': formData.constitution || '',
+    'ctl00$ContentPlaceHolder1$txtdescriptionbusiness': formData.description_business.trim() || '',
+    'ctl00$ContentPlaceHolder1$ddlBsinessActivity': formData.business_activity || '',
+    'ctl00$ContentPlaceHolder1$txtDate': formData.date_of_incorporation || '',
+    txtpaddress: formData.address_line1.trim() || '',
+    txtpaddress2: formData.address_line2.trim() || '',
+    txtpcity: formData.city.trim() || '',
+    txtpstate: formData.state || '',
+    txtppincode: formData.pincode || '',
+    'ctl00$ContentPlaceHolder1$txtPanNo': formData.pan_no.toUpperCase() || '',
+    'ctl00$ContentPlaceHolder1$txtemail': formData.email.trim() || '',
+    'ctl00$ContentPlaceHolder1$txtphone': formData.contact_no || '',
+    serviceCategory: 'iecReg',
+    leadSource: 'iecregistration-india.org',
+  });
+
+const handleSubmit = async (e) => {
+
+  e.preventDefault();
+
+  setSubmitStatus({ type: '', message: '' });
+
+  if (!validateForm()) {
+    setSubmitStatus({
+      type: 'error',
+      message: 'Please correct the errors shown in red above',
+    });
+    return;
+  }
+
+  setLoading(true);
+
+  const payload = prepareCrmPayload();
+
+  const crmUrl = `${import.meta.env.VITE_BACKEND_URL}/api/submit-iec`;
+
+  try {
+
+    const response = await axios.post(
+      crmUrl,
+      payload,
+      {
+        headers: { "Content-Type": "application/json" },
+        timeout: 90000
+      }
+    );
+
+    console.log("Backend Response:", response.data);
+
+    localStorage.setItem('iecSubmittedData', JSON.stringify(formData));
+    localStorage.removeItem('iecFormDraft');
+
+    setSubmitStatus({
+      type: 'success',
+      message: 'Form submitted successfully! Redirecting to payment page...',
+    });
+
+    setTimeout(() => {
+      window.location.replace('/payment-summary');
+    }, 2000);
+
+  } catch (err) {
+
+    console.error("Submission error:", err);
+
+    setSubmitStatus({
+      type: 'error',
+      message: 'Failed to submit form. Please try again.',
+    });
+
+  } finally {
+
+    setLoading(false);
+
+  }
+
+};
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+      <div className="bg-gradient-to-r from-orange-500 to-blue-900 text-white py-5 text-center text-xl md:text-2xl font-bold">
+        IEC REGISTRATION FORM
+      </div>
+
+      <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+        <FormField
+          label="1. Application Type (आवेदन का प्रकार)"
+          name="application_type"
+          type="select"
+          value={formData.application_type}
+          onChange={handleChange}
+          required
+          options={applicationTypes}
+          error={errors.application_type}
+        />
+
+        <FormField
+          label="2. Name of Business Entity (बिजनेस एंटिटी का नाम)"
+          name="business_entity"
+          value={formData.business_entity}
+          onChange={handleChange}
+          required
+          placeholder="Name of Business Entity"
+          error={errors.business_entity}
+        />
+
+        <FormField
+          label="3. Constitution of Business (व्यापार का संविधान)"
+          name="constitution"
+          type="select"
+          value={formData.constitution}
+          onChange={handleChange}
+          required
+          options={constitutions}
+          error={errors.constitution}
+        />
+
+        <FormField
+          label="4. Description of Business (व्यापार का वर्णन)"
+          name="description_business"
+          type="textarea"
+          value={formData.description_business}
+          onChange={handleChange}
+          placeholder="Brief description of your business"
+        />
+
+        <FormField
+          label="5. Business Activity (व्यावसायिक गतिविधि)"
+          name="business_activity"
+          type="select"
+          value={formData.business_activity}
+          onChange={handleChange}
+          required
+          options={businessActivities}
+          error={errors.business_activity}
+        />
+
+        <FormField
+          label="6. Date of Incorporation / Date of Birth (DD-MM-YYYY)"
+          name="date_of_incorporation"
+          type="date"
+          value={formData.date_of_incorporation}
+          onChange={handleChange}
+        />
+
+        {/* Address group */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            7. Principal Place of Business Entity (बिजनेस एंटिटी का प्रमुख स्थान)
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <input
+                type="text"
+                name="address_line1"
+                value={formData.address_line1}
+                onChange={handleChange}
+                placeholder="Address Line 1 *"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+              />
+              {errors.address_line1 && (
+                <p className="text-red-600 text-xs mt-1">{errors.address_line1}</p>
+              )}
+            </div>
+            <input
+              type="text"
+              name="address_line2"
+              value={formData.address_line2}
+              onChange={handleChange}
+              placeholder="Address Line 2"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              placeholder="City"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+            />
+            <FormField
+              name="state"
+              type="select"
+              value={formData.state}
+              onChange={handleChange}
+              required
+              options={indianStates}
+              error={errors.state}
+            />
+            <div>
+              <input
+                type="text"
+                name="pincode"
+                value={formData.pincode}
+                onChange={handleChange}
+                placeholder="Pincode *"
+                maxLength={6}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+              />
+              {errors.pincode && (
+                <p className="text-red-600 text-xs mt-1">{errors.pincode}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <FormField
+          label="8. Do You Have Any Branch (क्या आपकी कोई शाखा है)"
+          name="has_branch"
+          type="select"
+          value={formData.has_branch}
+          onChange={handleChange}
+          required
+          options={['Yes', 'No']}
+          error={errors.has_branch}
+        />
+
+        <FormField
+          label="9. PAN No. of Entity (इकाई का पैन नंबर)"
+          name="pan_no"
+          value={formData.pan_no}
+          onChange={handleChange}
+          required
+          placeholder="ABCDE1234F"
+          maxLength={10}
+          className="uppercase"
+          error={errors.pan_no}
+        />
+
+        <FormField
+          label="10. E-Mail ID (ईमेल आईडी)"
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+          placeholder="yourname@example.com"
+          error={errors.email}
+        />
+
+        <FormField
+          label="11. Contact No. (संपर्क संख्या)"
+          name="contact_no"
+          type="tel"
+          value={formData.contact_no}
+          onChange={handleChange}
+          required
+          placeholder="10-digit mobile number"
+          maxLength={10}
+          error={errors.contact_no}
+        />
+
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-gray-700">
+            Whether the firm is located in Special Economic Zone (SEZ)
+          </label>
+          <div className="flex gap-8">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="sez"
+                value="Yes"
+                checked={formData.sez === 'Yes'}
+                onChange={handleChange}
+              />
+              Yes
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="sez"
+                value="No"
+                checked={formData.sez === 'No'}
+                onChange={handleChange}
+              />
+              No
+            </label>
+          </div>
+        </div>
+
+        {submitStatus.message && (
+          <div
+            className={`p-4 rounded-lg border-l-4 text-center md:text-left ${
+              submitStatus.type === 'success'
+                ? 'bg-green-50 border-green-500 text-green-800'
+                : 'bg-red-50 border-red-500 text-red-800'
+            }`}
+          >
+            {submitStatus.message}
+          </div>
+        )}
+
+        <div className="pt-6 flex justify-center">
+          <GradientButton type="submit" disabled={loading}>
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                Submitting...
+              </span>
+            ) : (
+              'Proceed & Pay'
+            )}
+          </GradientButton>
+        </div>
+
+        <p className="text-xs text-gray-500 text-center mt-4">
+          By submitting, you agree to our terms, disclaimer, and policies.
+        </p>
+      </form>
+    </div>
+  );
+}
