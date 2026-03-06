@@ -5,15 +5,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const payload = req.body;
+    const encodedPayload = new URLSearchParams(payload).toString();
 
-    const crmResponse = await fetch('https://legalpapers.konceptsoftwaresolutions.com/leadRoutes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams(payload).toString(),
-    });
+const crmResponse = await fetch(process.env.CRM_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/x-www-form-urlencoded",
+    // Optional but helpful
+    "Referer": "https://www.iecregistration-india.org/",
+    "Origin": "https://www.iecregistration-india.org",
+    "User-Agent": "Mozilla/5.0 (compatible; LeadBot/1.0)"
+  },
+  body: encodedPayload,
+  // keep redirect: 'manual' if needed
+});
 
     const data = await crmResponse.text();
 
