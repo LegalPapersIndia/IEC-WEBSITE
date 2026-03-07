@@ -1,6 +1,5 @@
 // src/components/Form/RegistrationForm.jsx
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useRef } from 'react';  // useRef add for iframe ref
 import FormField from './FormField';
 import GradientButton from '../common/GradientButton';
 
@@ -51,6 +50,9 @@ export default function RegistrationForm() {
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
 
+  const hiddenFormRef = useRef(null);  // Ref for hidden form
+  const iframeRef = useRef(null);      // Ref for hidden iframe
+
   // Load draft
   useEffect(() => {
     const saved = localStorage.getItem('iecFormDraft');
@@ -70,7 +72,6 @@ export default function RegistrationForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
     const processedValue = name === 'pan_no' ? value.toUpperCase() : value;
 
     setFormData((prev) => ({ ...prev, [name]: processedValue }));
@@ -98,99 +99,99 @@ export default function RegistrationForm() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+const formatDate = (date) => {
+  if (!date) return "";
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setSubmitStatus({ type: '', message: '' });
+  if (!validateForm()) return;
 
-    if (!validateForm()) {
+  setLoading(true);
+  setSubmitStatus({ type: "", message: "" });
+
+  const crmPayload = {
+    "ctl00$ContentPlaceHolder1$ddlApplicationType": formData.application_type,
+    "ctl00$ContentPlaceHolder1$txtBusinesEntity": formData.business_entity,
+    "ctl00$ContentPlaceHolder1$ddlConstitution": formData.constitution,
+    "ctl00$ContentPlaceHolder1$txtdescriptionbusiness": formData.description_business,
+    "ctl00$ContentPlaceHolder1$ddlBsinessActivity": formData.business_activity,
+    "ctl00$ContentPlaceHolder1$txtDate": formatDate(formData.date_of_incorporation),
+
+    txtpaddress: formData.address_line1,
+    txtpaddress2: formData.address_line2,
+    txtpcity: formData.city,
+    txtpstate: formData.state,
+    txtppincode: formData.pincode,
+
+    "ctl00$ContentPlaceHolder1$txtPanNo": formData.pan_no,
+    "ctl00$ContentPlaceHolder1$txtemail": formData.email,
+    "ctl00$ContentPlaceHolder1$txtphone": formData.contact_no,
+
+    hasBranch: formData.has_branch,
+    sez: formData.sez,
+
+    serviceCategory: "iecReg",
+    leadSource: "iecregistration-india.org"
+  };
+
+  try {
+    const encodedData = new URLSearchParams(crmPayload).toString();
+
+    console.log("Sending CRM Data:", encodedData);
+
+const response = await fetch(
+  "http://localhost:5000/api/submit-iec",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(crmPayload),
+  }
+);
+
+const result = await response.json();
+
+console.log(result);
+
+
+    if (response.ok) {
       setSubmitStatus({
-        type: 'error',
-        message: 'Please correct the errors shown in red above',
+        type: "success",
+        message: "Application submitted successfully!",
       });
-      return;
-    }
 
-    setLoading(true);
-
-    // Simple & clean payload – no old ctl00$ style fields
-    const payload = {
-      application_type: formData.application_type || '',
-      business_entity: formData.business_entity.trim() || '',
-      constitution: formData.constitution || '',
-      description_business: formData.description_business?.trim() || '',
-      business_activity: formData.business_activity || '',
-      date_of_incorporation: formData.date_of_incorporation || '',
-      address_line1: formData.address_line1?.trim() || '',
-      address_line2: formData.address_line2?.trim() || '',
-      city: formData.city?.trim() || '',
-      state: formData.state || '',
-      pincode: formData.pincode || '',
-      has_branch: formData.has_branch || '',
-      pan_no: formData.pan_no?.toUpperCase() || '',
-      email: formData.email?.trim() || '',
-      contact_no: formData.contact_no || '',
-      sez: formData.sez || 'No',
-      // Extra info for lead tracking (optional)
-      source: 'iecregistration-india.org',
-      submitted_at: new Date().toISOString(),
-      form_version: 'frontend-v1',
-    };
-
-    // Direct URL – you said no backend needed
-    const crmUrl = 'https://legalpapers.konceptsoftwaresolutions.com/leadRoutes';
-    // If you later add env: import.meta.env.VITE_LEAD_URL || above url
-
-    try {
-      const response = await axios.post(
-        crmUrl,
-        payload,
-        {
-          headers: { "Content-Type": "application/json" },
-          timeout: 20000, // 20 seconds is enough
-        }
-      );
-
-      console.log("Backend Response:", response.data);
-
-      localStorage.setItem('iecSubmittedData', JSON.stringify(formData));
-      localStorage.removeItem('iecFormDraft');
-
-      setSubmitStatus({
-        type: 'success',
-        message: 'Form submitted successfully! Redirecting to payment page...',
-      });
+      localStorage.setItem("iecSubmittedData", JSON.stringify(formData));
 
       setTimeout(() => {
-        window.location.replace('/payment-summary');
-      }, 2000);
+        window.location.href = "/payment-summary";
+      }, 1500);
 
-    } catch (err) {
-      console.error("Submission error:", err);
-
-      let errorMsg = 'Failed to submit form. Please try again.';
-      
-      if (err.response) {
-        // Server responded with error
-        const status = err.response.status;
-        if (status === 404) errorMsg = 'Endpoint not found (404) – check URL';
-        else if (status === 400) errorMsg = 'Invalid data sent – check form fields';
-        else if (status === 405) errorMsg = 'Method not allowed (only POST?)';
-        else if (status >= 500) errorMsg = 'Server error – try later';
-      } else if (err.request) {
-        // No response – likely CORS or network
-        errorMsg = 'No response from server. Possible CORS issue or network problem. Try in incognito or contact support.';
-      }
-
+    } else {
       setSubmitStatus({
-        type: 'error',
-        message: errorMsg,
+        type: "error",
+        message: "CRM submission failed. Please try again.",
       });
-    } finally {
-      setLoading(false);
     }
-  };
+
+  } catch (error) {
+    console.error("Error submitting form:", error);
+
+    setSubmitStatus({
+      type: "error",
+      message: "Server error occurred. Please try again.",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div
@@ -270,7 +271,7 @@ export default function RegistrationForm() {
           onChange={handleChange}
         />
 
-        {/* 7. Address – Improved UI */}
+        {/* 7. Address */}
         <div className="space-y-6 bg-gray-50 p-6 rounded-xl border border-gray-200">
           <label className="block text-lg font-semibold text-gray-800">
             7. Principal Place of Business Entity (बिजनेस एंटिटी का प्रमुख स्थान)
@@ -461,9 +462,20 @@ export default function RegistrationForm() {
         </div>
 
         <p className="text-sm text-gray-500 text-center mt-6">
-          Kindly wait for 2 minutes after submitting  <span className="text-orange-600">details</span>
+          Kindly wait for 2 minutes after submitting <span className="text-orange-600">details</span>
         </p>
       </form>
+
+      {/* Hidden Form (for POST submission) */}
+      <form ref={hiddenFormRef} style={{ display: 'none' }} />
+
+      {/* Hidden Iframe (target for form submission) */}
+      <iframe
+        ref={iframeRef}
+        name="hiddenIframe"
+        style={{ display: 'none' }}
+        title="Hidden Submission Iframe"
+      />
     </div>
   );
 }
