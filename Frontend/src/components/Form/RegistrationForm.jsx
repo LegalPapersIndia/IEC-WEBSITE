@@ -147,7 +147,7 @@ const handleSubmit = async (e) => {
     console.log("Sending CRM Data:", encodedData);
 
 const response = await fetch(
-  "http://localhost:5000/api/submit-iec",
+  `${import.meta.env.VITE_API_URL}/api/submit-iec`,
   {
     method: "POST",
     headers: {
