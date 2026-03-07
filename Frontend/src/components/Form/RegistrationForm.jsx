@@ -450,9 +450,8 @@ const handleSubmit = async (e) => {
         </div>
 
         <p className="text-sm text-gray-500 text-center mt-6">
-          By submitting, you agree to our <span className="text-orange-600">terms</span>,{" "}
-          <span className="text-orange-600">disclaimer</span>, and <span className="text-orange-600">policies</span>.
-        </p>
+          Kindly wait for 2 minutes after submitting  <span className="text-orange-600">details</span>
+          </p>
       </form>
     </div>
   );
