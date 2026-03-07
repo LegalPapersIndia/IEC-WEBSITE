@@ -71,7 +71,6 @@ export default function RegistrationForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // PAN uppercase
     const processedValue = name === 'pan_no' ? value.toUpperCase() : value;
 
     setFormData((prev) => ({ ...prev, [name]: processedValue }));
@@ -100,86 +99,98 @@ export default function RegistrationForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const prepareCrmPayload = () => ({
-    'ctl00$ContentPlaceHolder1$ddlApplicationType': formData.application_type || '',
-    'ctl00$ContentPlaceHolder1$txtBusinesEntity': formData.business_entity.trim() || '',
-    'ctl00$ContentPlaceHolder1$ddlConstitution': formData.constitution || '',
-    'ctl00$ContentPlaceHolder1$txtdescriptionbusiness': formData.description_business.trim() || '',
-    'ctl00$ContentPlaceHolder1$ddlBsinessActivity': formData.business_activity || '',
-    'ctl00$ContentPlaceHolder1$txtDate': formData.date_of_incorporation || '',
-    txtpaddress: formData.address_line1.trim() || '',
-    txtpaddress2: formData.address_line2.trim() || '',
-    txtpcity: formData.city.trim() || '',
-    txtpstate: formData.state || '',
-    txtppincode: formData.pincode || '',
-    'ctl00$ContentPlaceHolder1$txtPanNo': formData.pan_no.toUpperCase() || '',
-    'ctl00$ContentPlaceHolder1$txtemail': formData.email.trim() || '',
-    'ctl00$ContentPlaceHolder1$txtphone': formData.contact_no || '',
-    serviceCategory: 'iecReg',
-    leadSource: 'iecregistration-india.org',
-  });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-const handleSubmit = async (e) => {
+    setSubmitStatus({ type: '', message: '' });
 
-  e.preventDefault();
+    if (!validateForm()) {
+      setSubmitStatus({
+        type: 'error',
+        message: 'Please correct the errors shown in red above',
+      });
+      return;
+    }
 
-  setSubmitStatus({ type: '', message: '' });
+    setLoading(true);
 
-  if (!validateForm()) {
-    setSubmitStatus({
-      type: 'error',
-      message: 'Please correct the errors shown in red above',
-    });
-    return;
-  }
+    // Simple & clean payload – no old ctl00$ style fields
+    const payload = {
+      application_type: formData.application_type || '',
+      business_entity: formData.business_entity.trim() || '',
+      constitution: formData.constitution || '',
+      description_business: formData.description_business?.trim() || '',
+      business_activity: formData.business_activity || '',
+      date_of_incorporation: formData.date_of_incorporation || '',
+      address_line1: formData.address_line1?.trim() || '',
+      address_line2: formData.address_line2?.trim() || '',
+      city: formData.city?.trim() || '',
+      state: formData.state || '',
+      pincode: formData.pincode || '',
+      has_branch: formData.has_branch || '',
+      pan_no: formData.pan_no?.toUpperCase() || '',
+      email: formData.email?.trim() || '',
+      contact_no: formData.contact_no || '',
+      sez: formData.sez || 'No',
+      // Extra info for lead tracking (optional)
+      source: 'iecregistration-india.org',
+      submitted_at: new Date().toISOString(),
+      form_version: 'frontend-v1',
+    };
 
-  setLoading(true);
+    // Direct URL – you said no backend needed
+    const crmUrl = 'https://legalpapers.konceptsoftwaresolutions.com/leadRoutes';
+    // If you later add env: import.meta.env.VITE_LEAD_URL || above url
 
-  const payload = prepareCrmPayload();
+    try {
+      const response = await axios.post(
+        crmUrl,
+        payload,
+        {
+          headers: { "Content-Type": "application/json" },
+          timeout: 20000, // 20 seconds is enough
+        }
+      );
 
-  const crmUrl = `${import.meta.env.VITE_BACKEND_URL}/api/submit-iec`;
+      console.log("Backend Response:", response.data);
 
-  try {
+      localStorage.setItem('iecSubmittedData', JSON.stringify(formData));
+      localStorage.removeItem('iecFormDraft');
 
-    const response = await axios.post(
-      crmUrl,
-      payload,
-      {
-        headers: { "Content-Type": "application/json" },
-        timeout: 90000
+      setSubmitStatus({
+        type: 'success',
+        message: 'Form submitted successfully! Redirecting to payment page...',
+      });
+
+      setTimeout(() => {
+        window.location.replace('/payment-summary');
+      }, 2000);
+
+    } catch (err) {
+      console.error("Submission error:", err);
+
+      let errorMsg = 'Failed to submit form. Please try again.';
+      
+      if (err.response) {
+        // Server responded with error
+        const status = err.response.status;
+        if (status === 404) errorMsg = 'Endpoint not found (404) – check URL';
+        else if (status === 400) errorMsg = 'Invalid data sent – check form fields';
+        else if (status === 405) errorMsg = 'Method not allowed (only POST?)';
+        else if (status >= 500) errorMsg = 'Server error – try later';
+      } else if (err.request) {
+        // No response – likely CORS or network
+        errorMsg = 'No response from server. Possible CORS issue or network problem. Try in incognito or contact support.';
       }
-    );
 
-    console.log("Backend Response:", response.data);
-
-    localStorage.setItem('iecSubmittedData', JSON.stringify(formData));
-    localStorage.removeItem('iecFormDraft');
-
-    setSubmitStatus({
-      type: 'success',
-      message: 'Form submitted successfully! Redirecting to payment page...',
-    });
-
-    setTimeout(() => {
-      window.location.replace('/payment-summary');
-    }, 2000);
-
-  } catch (err) {
-
-    console.error("Submission error:", err);
-
-    setSubmitStatus({
-      type: 'error',
-      message: 'Failed to submit form. Please try again.',
-    });
-
-  } finally {
-
-    setLoading(false);
-
-  }
-
-};
+      setSubmitStatus({
+        type: 'error',
+        message: errorMsg,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -451,7 +462,7 @@ const handleSubmit = async (e) => {
 
         <p className="text-sm text-gray-500 text-center mt-6">
           Kindly wait for 2 minutes after submitting  <span className="text-orange-600">details</span>
-          </p>
+        </p>
       </form>
     </div>
   );
