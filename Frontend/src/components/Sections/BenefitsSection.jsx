@@ -5,14 +5,16 @@ export default function BenefitsSection() {
       id="benefits"
       className="py-16 md:py-20 bg-gradient-to-br from-orange-500 via-orange-600 to-blue-900 text-white"
     >
-      <div className="container mx-auto px-4 max-w-6xl">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 underline decoration-4 decoration-orange-300 underline-offset-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto">
+        {/* Heading - centered and slightly larger */}
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-12 md:mb-16 underline decoration-4 decoration-orange-300 underline-offset-8">
           Benefits of Import Export Code (IEC) Registration Certificate
         </h2>
 
-        <div className="grid md:grid-cols-2 gap-6 md:gap-10">
+        {/* Grid - full width with reduced side padding */}
+        <div className="grid md:grid-cols-2 gap-6 lg:gap-10">
           {/* Left Column */}
-          <div className="space-y-5">
+          <div className="space-y-5 md:space-y-6">
             {[
               {
                 title: "What is the Applicability of IEC?",
@@ -46,15 +48,15 @@ export default function BenefitsSection() {
             ].map((item, index) => (
               <details
                 key={index}
-                className="group bg-white text-gray-800 rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl"
+                className="group bg-white/95 backdrop-blur-sm text-gray-800 rounded-xl overflow-hidden shadow-xl transition-all duration-300 hover:shadow-2xl border border-white/20"
               >
-                <summary className="flex justify-between items-center px-6 py-4 cursor-pointer font-semibold text-lg border-l-4 border-orange-500 group-open:bg-gradient-to-r group-open:from-orange-50 group-open:to-blue-50">
+                <summary className="flex justify-between items-center px-5 sm:px-6 py-4 cursor-pointer font-semibold text-base md:text-lg border-l-4 border-orange-500 group-open:bg-gradient-to-r group-open:from-orange-50 group-open:to-blue-50 transition-colors">
                   {item.title}
-                  <span className="text-2xl font-bold text-orange-500 group-open:rotate-180 transition-transform">
+                  <span className="text-2xl md:text-3xl font-bold text-orange-500 group-open:rotate-180 transition-transform duration-300">
                     +
                   </span>
                 </summary>
-                <div className="px-6 pb-5 pt-2 text-gray-700">
+                <div className="px-5 sm:px-6 pb-5 pt-3 text-gray-700 leading-relaxed">
                   <p>{item.content}</p>
                 </div>
               </details>
@@ -62,7 +64,7 @@ export default function BenefitsSection() {
           </div>
 
           {/* Right Column */}
-          <div className="space-y-5">
+          <div className="space-y-5 md:space-y-6">
             {[
               {
                 title: "How much time will take to obtain IEC?",
@@ -84,7 +86,7 @@ export default function BenefitsSection() {
                 content: (
                   <>
                     <p>The following documents are needed for IEC registration for a Partnership firm:</p>
-                    <ul className="list-disc pl-6 mt-2 space-y-1">
+                    <ul className="list-disc pl-6 mt-3 space-y-1.5 text-gray-700">
                       <li>PAN Card of the firm</li>
                       <li>Partnership Deed</li>
                       <li>PAN & Aadhaar of all partners</li>
@@ -98,7 +100,7 @@ export default function BenefitsSection() {
                 content: (
                   <>
                     <p>For Private Limited or LLP, the required documents are:</p>
-                    <ul className="list-disc pl-6 mt-2 space-y-1">
+                    <ul className="list-disc pl-6 mt-3 space-y-1.5 text-gray-700">
                       <li>Company PAN Card</li>
                       <li>Certificate of Incorporation</li>
                       <li>PAN & Aadhaar of all directors</li>
@@ -112,7 +114,7 @@ export default function BenefitsSection() {
                 content: (
                   <>
                     <p>IEC registration for a Proprietorship requires the following documents:</p>
-                    <ul className="list-disc pl-6 mt-2 space-y-1">
+                    <ul className="list-disc pl-6 mt-3 space-y-1.5 text-gray-700">
                       <li>PAN Card</li>
                       <li>Aadhaar Card</li>
                       <li>Electricity Bill or Rent Agreement</li>
@@ -124,15 +126,17 @@ export default function BenefitsSection() {
             ].map((item, index) => (
               <details
                 key={index}
-                className="group bg-white text-gray-800 rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl"
+                className="group bg-white/95 backdrop-blur-sm text-gray-800 rounded-xl overflow-hidden shadow-xl transition-all duration-300 hover:shadow-2xl border border-white/20"
               >
-                <summary className="flex justify-between items-center px-6 py-4 cursor-pointer font-semibold text-lg border-l-4 border-orange-500 group-open:bg-gradient-to-r group-open:from-orange-50 group-open:to-blue-50">
+                <summary className="flex justify-between items-center px-5 sm:px-6 py-4 cursor-pointer font-semibold text-base md:text-lg border-l-4 border-orange-500 group-open:bg-gradient-to-r group-open:from-orange-50 group-open:to-blue-50 transition-colors">
                   {item.title}
-                  <span className="text-2xl font-bold text-orange-500 group-open:rotate-180 transition-transform">
+                  <span className="text-2xl md:text-3xl font-bold text-orange-500 group-open:rotate-180 transition-transform duration-300">
                     +
                   </span>
                 </summary>
-                <div className="px-6 pb-5 pt-2 text-gray-700">{item.content}</div>
+                <div className="px-5 sm:px-6 pb-5 pt-3 text-gray-700 leading-relaxed">
+                  {item.content}
+                </div>
               </details>
             ))}
           </div>

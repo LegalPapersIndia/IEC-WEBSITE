@@ -182,12 +182,17 @@ const handleSubmit = async (e) => {
 };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-      <div className="bg-gradient-to-r from-orange-500 to-blue-900 text-white py-5 text-center text-xl md:text-2xl font-bold">
+    <div
+      id="registration-form"
+      className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200/80"
+    >
+      {/* Header */}
+      <div className="bg-gradient-to-r from-orange-600 to-blue-900 text-white py-6 text-center text-2xl md:text-3xl font-bold tracking-wide shadow-md">
         IEC REGISTRATION FORM
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+      <form onSubmit={handleSubmit} className="p-6 md:p-10 lg:p-12 space-y-8">
+        {/* 1. Application Type */}
         <FormField
           label="1. Application Type (आवेदन का प्रकार)"
           name="application_type"
@@ -199,16 +204,18 @@ const handleSubmit = async (e) => {
           error={errors.application_type}
         />
 
+        {/* 2. Business Entity Name */}
         <FormField
           label="2. Name of Business Entity (बिजनेस एंटिटी का नाम)"
           name="business_entity"
           value={formData.business_entity}
           onChange={handleChange}
           required
-          placeholder="Name of Business Entity"
+          placeholder="Enter business entity name"
           error={errors.business_entity}
         />
 
+        {/* 3. Constitution */}
         <FormField
           label="3. Constitution of Business (व्यापार का संविधान)"
           name="constitution"
@@ -220,15 +227,18 @@ const handleSubmit = async (e) => {
           error={errors.constitution}
         />
 
+        {/* 4. Description */}
         <FormField
           label="4. Description of Business (व्यापार का वर्णन)"
           name="description_business"
           type="textarea"
           value={formData.description_business}
           onChange={handleChange}
-          placeholder="Brief description of your business"
+          placeholder="Briefly describe your business activities..."
+          rows={4}
         />
 
+        {/* 5. Business Activity */}
         <FormField
           label="5. Business Activity (व्यावसायिक गतिविधि)"
           name="business_activity"
@@ -240,6 +250,7 @@ const handleSubmit = async (e) => {
           error={errors.business_activity}
         />
 
+        {/* 6. Date */}
         <FormField
           label="6. Date of Incorporation / Date of Birth (DD-MM-YYYY)"
           name="date_of_incorporation"
@@ -248,12 +259,13 @@ const handleSubmit = async (e) => {
           onChange={handleChange}
         />
 
-        {/* Address group */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
+        {/* 7. Address – Improved UI */}
+        <div className="space-y-6 bg-gray-50 p-6 rounded-xl border border-gray-200">
+          <label className="block text-lg font-semibold text-gray-800">
             7. Principal Place of Business Entity (बिजनेस एंटिटी का प्रमुख स्थान)
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <input
                 type="text"
@@ -261,10 +273,10 @@ const handleSubmit = async (e) => {
                 value={formData.address_line1}
                 onChange={handleChange}
                 placeholder="Address Line 1 *"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 shadow-sm text-gray-800 placeholder-gray-500"
               />
               {errors.address_line1 && (
-                <p className="text-red-600 text-xs mt-1">{errors.address_line1}</p>
+                <p className="text-red-600 text-sm mt-1">{errors.address_line1}</p>
               )}
             </div>
             <input
@@ -272,19 +284,21 @@ const handleSubmit = async (e) => {
               name="address_line2"
               value={formData.address_line2}
               onChange={handleChange}
-              placeholder="Address Line 2"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+              placeholder="Address Line 2 (optional)"
+              className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 shadow-sm text-gray-800 placeholder-gray-500"
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <input
               type="text"
               name="city"
               value={formData.city}
               onChange={handleChange}
-              placeholder="City"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+              placeholder="City *"
+              className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 shadow-sm text-gray-800 placeholder-gray-500"
             />
+
             <FormField
               name="state"
               type="select"
@@ -293,7 +307,9 @@ const handleSubmit = async (e) => {
               required
               options={indianStates}
               error={errors.state}
+              className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 shadow-sm text-gray-800"
             />
+
             <div>
               <input
                 type="text"
@@ -302,15 +318,16 @@ const handleSubmit = async (e) => {
                 onChange={handleChange}
                 placeholder="Pincode *"
                 maxLength={6}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 shadow-sm text-gray-800 placeholder-gray-500"
               />
               {errors.pincode && (
-                <p className="text-red-600 text-xs mt-1">{errors.pincode}</p>
+                <p className="text-red-600 text-sm mt-1">{errors.pincode}</p>
               )}
             </div>
           </div>
         </div>
 
+        {/* 8. Branch */}
         <FormField
           label="8. Do You Have Any Branch (क्या आपकी कोई शाखा है)"
           name="has_branch"
@@ -322,6 +339,7 @@ const handleSubmit = async (e) => {
           error={errors.has_branch}
         />
 
+        {/* 9. PAN */}
         <FormField
           label="9. PAN No. of Entity (इकाई का पैन नंबर)"
           name="pan_no"
@@ -334,6 +352,7 @@ const handleSubmit = async (e) => {
           error={errors.pan_no}
         />
 
+        {/* 10. Email */}
         <FormField
           label="10. E-Mail ID (ईमेल आईडी)"
           name="email"
@@ -345,6 +364,7 @@ const handleSubmit = async (e) => {
           error={errors.email}
         />
 
+        {/* 11. Contact */}
         <FormField
           label="11. Contact No. (संपर्क संख्या)"
           name="contact_no"
@@ -357,37 +377,41 @@ const handleSubmit = async (e) => {
           error={errors.contact_no}
         />
 
-        <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-gray-700">
+        {/* SEZ */}
+        <div className="space-y-3 bg-gray-50 p-6 rounded-xl border border-gray-200">
+          <label className="block text-lg font-semibold text-gray-800">
             Whether the firm is located in Special Economic Zone (SEZ)
           </label>
-          <div className="flex gap-8">
-            <label className="flex items-center gap-2 cursor-pointer">
+          <div className="flex gap-12">
+            <label className="flex items-center gap-3 cursor-pointer text-gray-700">
               <input
                 type="radio"
                 name="sez"
                 value="Yes"
                 checked={formData.sez === 'Yes'}
                 onChange={handleChange}
+                className="w-5 h-5 text-orange-600 focus:ring-orange-500"
               />
               Yes
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-3 cursor-pointer text-gray-700">
               <input
                 type="radio"
                 name="sez"
                 value="No"
                 checked={formData.sez === 'No'}
                 onChange={handleChange}
+                className="w-5 h-5 text-orange-600 focus:ring-orange-500"
               />
               No
             </label>
           </div>
         </div>
 
+        {/* Submit Status */}
         {submitStatus.message && (
           <div
-            className={`p-4 rounded-lg border-l-4 text-center md:text-left ${
+            className={`p-5 rounded-xl border-l-4 text-center md:text-left shadow-sm ${
               submitStatus.type === 'success'
                 ? 'bg-green-50 border-green-500 text-green-800'
                 : 'bg-red-50 border-red-500 text-red-800'
@@ -397,11 +421,12 @@ const handleSubmit = async (e) => {
           </div>
         )}
 
-        <div className="pt-6 flex justify-center">
-          <GradientButton type="submit" disabled={loading}>
+        {/* Submit Button */}
+        <div className="pt-8 flex justify-center">
+          <GradientButton type="submit" disabled={loading} className="text-lg py-4 px-12">
             {loading ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <span className="flex items-center gap-3">
+                <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
                   <circle
                     className="opacity-25"
                     cx="12"
@@ -419,13 +444,14 @@ const handleSubmit = async (e) => {
                 Submitting...
               </span>
             ) : (
-              'Proceed & Pay'
+              'Submit Application'
             )}
           </GradientButton>
         </div>
 
-        <p className="text-xs text-gray-500 text-center mt-4">
-          By submitting, you agree to our terms, disclaimer, and policies.
+        <p className="text-sm text-gray-500 text-center mt-6">
+          By submitting, you agree to our <span className="text-orange-600">terms</span>,{" "}
+          <span className="text-orange-600">disclaimer</span>, and <span className="text-orange-600">policies</span>.
         </p>
       </form>
     </div>
